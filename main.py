@@ -1,3 +1,4 @@
+from song_manager import select_song
 from beatmap import extract_osz, parse_osu_file
 from environment import RhythmEnv
 import glob
@@ -19,20 +20,26 @@ from models.ppo_model import PPO, T_horizon
 from models.dqn_models import *
 from models.a2c_model import run_A2C
 
-def run_experiment(algorithm_type="PPO", render=False):
+def run_experiment(algorithm_type="PPO", render=False, selected_osu=None):
     """Run experiment with specified algorithm type"""
     is_dqn = True
     print(f"\n=== Running {algorithm_type} Experiment ===")
 
-    # osu! beatmap 불러오기
-    out_dir = extract_osz("data/Sydosys - Partition.osz")
-    osu_files = glob.glob(out_dir + "/*.osu")
-    notes = parse_osu_file(osu_files[0])
+    # selected_osu가 None이면 자동으로 선택하게 함 
+    if selected_osu is None:
+        from song_manager import select_song
+        selected_osu = select_song("data")
+        if not selected_osu:
+            print("No song selected. Exiting experiment.")
+            return
+
+    notes = parse_osu_file(selected_osu)
+    print(f"Loaded beatmap: {selected_osu} | Notes: {len(notes)}")
     env = RhythmEnv(notes)
-    print(f"Loaded beatmap: {osu_files[0]} | Notes: {len(notes)}")
 
     if render:
-        notes = parse_osu_file("beatmaps/Sydosys - Partition/Sydosys - Partition (tasuke912) [Finem].osu")
+        notes = parse_osu_file(selected_osu)
+        print(f"Loaded beatmap: {selected_osu} | Notes: {len(notes)}")
         env = RhythmEnv(notes)
 
     if algorithm_type == "Dueling_DQN":
@@ -119,8 +126,13 @@ def run_experiment(algorithm_type="PPO", render=False):
     env.close()
 
 def main():
+    selected_osu = select_song("data")  
+    if not selected_osu:
+        print("A song is not selected.\n")
+        return
+
     """Run experiments for all three algorithms"""
-    algorithms = ["DQN", "Double_DQN", "Dueling_DQN", "PPO", "TD3"]
+    algorithms = ["DQN", "Double_DQN", "Dueling_DQN", "PPO", "A2C"]
 
     print("Choose algorithm to run:")
     print("1. DQN")
@@ -137,18 +149,18 @@ def main():
     render = render_choice in ['y', 'yes']
 
     if choice == "1":
-        run_experiment("DQN", render)
+        run_experiment("DQN", render, selected_osu)
     elif choice == "2":
-        run_experiment("Double_DQN", render)
+        run_experiment("Double_DQN", render, selected_osu)
     elif choice == "3":
-        run_experiment("Dueling_DQN", render)
+        run_experiment("Dueling_DQN", render, selected_osu)
     elif choice == "4":
-        run_experiment("PPO", render)
+        run_experiment("PPO", render, selected_osu)
     elif choice == "5":
-        run_experiment("A2C", render)
+        run_experiment("A2C", render, selected_osu)
     elif choice == "6":
         for alg in algorithms:
-            run_experiment(alg, render)
+            run_experiment(alg, render, selected_osu)
         
     else:
         print("Invalid choice, running DQN by default")
