@@ -8,6 +8,9 @@ import gymnasium as gym
 import collections
 import random
 import numpy as np
+import os
+import math
+import pandas as pd
 
 # pytorch library is used for deep learning
 import torch
@@ -19,6 +22,41 @@ from torch.distributions import Categorical
 from models.ppo_model import PPO, T_horizon
 from models.dqn_models import *
 from models.a2c_model import run_A2C
+
+def set_seed(seed):
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    os.environ['PYTHONHASHSEED'] = str(seed)
+
+def run_with_seeds(alg_name, render, selected_osu):
+    seeds = [0, 23, 147, 575, 2768]
+    results = []
+
+    for seed in seeds:
+        print(f"\n Running {alg_name} (seed={seed})")
+        set_seed(seed)
+        score = run_experiment(algorithm_type=alg_name,
+                               render=render,
+                               selected_osu=selected_osu)
+        if score is not None:
+            results.append(score)
+
+    if not results:
+        print("no results recorded.")
+        return
+
+    # 기본 통계 계산
+    mean_score = np.mean(results)
+    std_score = np.std(results)
+    sem = std_score / np.sqrt(len(results))
+    ci = 1.96 * sem  # 95% 신뢰구간
+    print(f"\n===== {alg_name} summary =====")
+    print(f" Seeds: {seeds}")
+    print(f" Mean score: {mean_score:.2f}")
+    print(f" Std: {std_score:.2f}")
+    print(f" 95% CI: [{mean_score - ci:.2f}, {mean_score + ci:.2f}]")
 
 def run_experiment(algorithm_type="PPO", render=False, selected_osu=None):
     """Run experiment with specified algorithm type"""
@@ -133,6 +171,7 @@ def main():
 
     """Run experiments for all three algorithms"""
     algorithms = ["DQN", "Double_DQN", "Dueling_DQN", "PPO", "A2C"]
+    seeds = [0, 23, 147, 575, 2768]
 
     print("Choose algorithm to run:")
     print("1. DQN")
@@ -149,22 +188,21 @@ def main():
     render = render_choice in ['y', 'yes']
 
     if choice == "1":
-        run_experiment("DQN", render, selected_osu)
+        run_with_seeds("DQN", render, selected_osu)
     elif choice == "2":
-        run_experiment("Double_DQN", render, selected_osu)
+        run_with_seeds("Double_DQN", render, selected_osu)
     elif choice == "3":
-        run_experiment("Dueling_DQN", render, selected_osu)
+        run_with_seeds("Dueling_DQN", render, selected_osu)
     elif choice == "4":
-        run_experiment("PPO", render, selected_osu)
+        run_with_seeds("PPO", render, selected_osu)
     elif choice == "5":
-        run_experiment("A2C", render, selected_osu)
+        run_with_seeds("A2C", render, selected_osu)
     elif choice == "6":
         for alg in algorithms:
-            run_experiment(alg, render, selected_osu)
-        
+            run_with_seeds(alg, render, selected_osu)
     else:
-        print("Invalid choice, running DQN by default")
-        run_experiment("DQN", render)
+        print("Invalid choice, running DQN by default.")
+        run_with_seeds("DQN", render, selected_osu)
 
 if __name__ == '__main__':
     main()

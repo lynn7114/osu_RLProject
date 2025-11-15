@@ -25,7 +25,7 @@ def select_song(data_dir="data"):
         return None
 
     try:
-        choice = int(input("Select a song's number to choose: ")) - 1
+        choice = int(input("Select a song's number to choose(1-5): ")) - 1
     except ValueError:
         print("Write down a number.")
         return None
