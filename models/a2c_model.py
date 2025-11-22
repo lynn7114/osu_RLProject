@@ -8,6 +8,7 @@ import numpy as np
 import torch.nn.functional as F
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+print_interval = 20
 
 class PolicyNetwork(nn.Module):
     def __init__(self):
@@ -125,4 +126,5 @@ def run_A2C(env):
             state = next_state
 
         if epoch % 10 == 0:
-            print('Epoch:{}, episode reward is {}'.format(epoch, episode_reward))
+            print("n_episode :{}, score : {:.1f}, n_buffer : {}".format(
+                                                                epoch, episode_reward/print_interval, memory.size()))
