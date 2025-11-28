@@ -38,7 +38,43 @@ osu!는 https://osu.ppy.sh/ 에서 다운받을 수 있는 리듬게임으로 ht
 
 ## 프로그램 구동 방법
 
-- python3 main.py
-    - 곡 선택, 알고리즘 선택 등이 모두 차례로 수동으로 이루어진다. 원래 프로그램의 개발 목표는 이쪽이다.
-- python main.py train --algo PPO --lr 0.0003 --gamma 0.95 --song 2 --render
-    - 알고리즘을 PPO로 선택하고 학습률을 0.0003으로 지정하고 할인율을 0.95로 지정하고 곡을 2번째 것을 선택하고 GUI visualization을 enable한다. 서로 다른 hyperparameter에서의 결과 비교가 가능하도록 하기 위해서 이 옵션을 typer를 통해서 추가하였다. 
+```
+python3 main.py
+```
+- 곡 선택, 알고리즘 선택 등이 모두 차례로 수동으로 이루어진다. 원래 프로그램의 개발 목표는 이쪽이다.
+
+```
+python main.py train --algo PPO --lr 0.0003 --gamma 0.95 --song 2 --render
+```
+- 알고리즘을 PPO로 선택하고 학습률을 0.0003으로 지정하고 할인율을 0.95로 지정하고 곡을 2번째 것을 선택하고 GUI visualization을 enable한다. 서로 다른 hyperparameter에서의 결과 비교가 가능하도록 하기 위해서 이 옵션을 typer를 통해서 추가하였다.
+
+
+## 설치 및 요구사항
+
+이 프로젝트를 실행하기 위해서는 Python 3.x 환경과 typer, random 등의 라이브러리가 필요하다. 
+
+## 라이브러리 설치
+
+프로젝트 루트 디렉토리에서 다음 명령어를 사용하여 필수 패키지를 설치한다. 
+
+```bash
+pip install gymnasium numpy pandas torch typer seaborn
+```
+
+## 강화학습 환경 설정
+
+- Action Space
+    - `0`: 대기 (No Action)
+    - `1`: 노트 입력 (클릭)
+- Observation Space
+    - [다음 노트까지의 시간, x좌표, y좌표, combo(정규화)] 형식의 4차원 벡터
+- Reward
+    - 노트 입력 타이밍이 정확할수록 높은 보상
+    - 노트 입력 타이밍을 놓치거나 오차가 클 경우 벌점 -0.5
+- 악곡 전체를 사용하기에는 노래가 길어서 처음 200개 노트만 사용함
+
+## 성능 평가 및 비교 (Evaluation 함수 내 구현)
+
+- 다중 시드: [0, 23, 147, 575, 2768]를 random number generator seed로 만들어서 편향을 줄임
+- 주요 지표: 각 알고리즘별 평균 점수와 95% 신뢰 구간을 계산함
+- 시각화: `plots/` 폴더에 CI를 포함한 막대 차트 및 학습 곡선 생성
