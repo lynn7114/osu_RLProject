@@ -10,11 +10,6 @@ import seaborn as sns
 sns.set_theme(style="whitegrid", palette="pastel")
 
 def load_results(result_glob_pattern="results_*.csv"):
-    """
-    CSV 파일들을 불러와 하나의 DataFrame으로 합칩니다.
-    각 CSV는 알고리즘별로 seed별 결과를 포함하고 있어야 합니다.
-    컬럼 예시: Seed, Score, Algorithm
-    """
     paths = sorted(glob.glob(result_glob_pattern))
     if not paths:
         raise FileNotFoundError(f"No result CSV found with pattern {result_glob_pattern}")
