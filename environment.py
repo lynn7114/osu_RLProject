@@ -3,11 +3,6 @@ from gymnasium import spaces
 import numpy as np
 
 class RhythmEnv(gym.Env):
-    """
-    osu! beatmap 기반 리듬게임 환경.
-    각 step은 일정 시간(ms 단위) 흐름을 나타내며, 
-    action에 따라 노트를 성공 또는 실패로 판정함.
-    """
     metadata = {'render.modes': ['human']}
 
     def __init__(self, notes, frame_ms=16, hit_window=100):
@@ -24,9 +19,7 @@ class RhythmEnv(gym.Env):
         self.frame_ms = frame_ms
         self.hit_window = hit_window
 
-        # 행동: 0 = 대기, 1 = 노트 입력 (클릭)
         self.action_space = spaces.Discrete(2)
-        # 상태: [다음 노트까지의 시간, x좌표, y좌표, combo(정규화)]
         self.observation_space = spaces.Box(low=0, high=1, shape=(4,), dtype=np.float32)
 
         self.reset()
