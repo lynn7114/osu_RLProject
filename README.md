@@ -67,7 +67,7 @@ pip install gymnasium numpy pandas torch typer seaborn
     - `0`: 대기 (No Action)
     - `1`: 노트 입력 (클릭)
 - Observation Space
-    - ([다음 노트까지의 시간, x좌표, y좌표, combo(정규화)]) 형식의 4차원 벡터
+    - [다음 노트까지의 시간, x좌표, y좌표, combo(정규화)] 형식의 4차원 벡터
 - Reward
     - 노트 입력 타이밍이 정확할수록 0.0에서 최대 1.0의 보상
     - 노트 입력 타이밍을 놓치거나 오차가 클 경우 벌점 -0.5를 받으며 콤보가 초기화됨
@@ -75,6 +75,6 @@ pip install gymnasium numpy pandas torch typer seaborn
 
 ## 성능 평가 및 비교 (Evaluation 함수 내 구현)
 
-- 다중 시드: ([0, 23, 147, 575, 2768])를 random number generator seed로 만들어서 편향을 줄임
+- 다중 시드: [0, 23, 147, 575, 2768]를 random number generator seed로 만들어서 편향을 줄임
 - 주요 지표: 각 알고리즘별 평균 점수와 95% 신뢰 구간을 계산함
 - 시각화: `plots/` 폴더에 CI를 포함한 막대 차트 및 학습 곡선 생성
