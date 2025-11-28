@@ -207,12 +207,13 @@ def main():
 
 @app.command()
 def train(
-    algo: str = typer.Option("PPO", "--algo", help="Choose algorithm (DQN, PPO, etc.)"),
-    lr: float = typer.Option(1e-3, "--lr", help="Learning rate"),
-    gamma: float = typer.Option(0.99, "--gamma", help="Discount factor"),
-    song: str = typer.Option(None, "--song", help="Song number or path"),
-    render: bool = typer.Option(False, "--render", help="Enable GUI visualization"),
+    algo: str = typer.Option("--algo", "PPO", help="Algorithm"),
+    lr: float = typer.Option("--learning-rate", 1e-3, help="Learning rate"),
+    gamma: float = typer.Option("--gamma", 0.99, help="Discount factor"),
+    song: str = typer.Option("--song", None, help="Song number or path"),
+    render: bool = typer.Option("--render", False, help="Enable GUI"),
 ):
+
     if song is None:
         selected_osu = select_song("data")
     else:
