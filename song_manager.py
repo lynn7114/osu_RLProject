@@ -15,11 +15,6 @@ def list_osz_files(data_dir="data"): #data dir 내 파일명을 정렬하여 반
 
 
 def select_song(data_dir="data"):
-    """
-    - data 폴더 내 .osz 파일들을 자동으로 번호 매겨 출력
-    - 사용자 입력으로 곡 선택
-    - 선택한 .osz 압축 해제 후 .osu 파일을 찾아 반환
-    """
     osz_files = list_osz_files(data_dir)
     if not osz_files:
         return None

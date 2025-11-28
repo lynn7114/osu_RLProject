@@ -1,16 +1,44 @@
-# RLProject
+# 리듬게임 osu! 강화학습 프로그램 
+
+## 프로젝트에서 사용한 osu! 설명
+
+osu!는 https://osu.ppy.sh/ 에서 다운받을 수 있는 리듬게임으로 https://osu.ppy.sh/beatmaps/packs 에서 osu!에서 사용하는 비트맵 팩을 다운받을 수 있다. osu!에서는 .osu 파일로 리듬게임을 할 수 있는데 여러 개의 .osu 맵 파일들을 .osz 파일 형태로 묶어 놓은 자료 모음이 비트맵 팩이다. 해당 프로젝트에서는 osu! 게임과 직접 연동하지는 않고 배포된 비트맵 팩의 osu! 파일을 기반으로 강화학습을 진행하였다. 
+
 ## 폴더별 역할 정리 
 
-main.py: 프로그램 실행 시작점
+- main.py
+    - 프로그램 실행 시작점
+    - random number generator seed 변경을 통한 실험 및 신뢰구간 작성
+    - 노래 선택 함수 불러온 후 알고리즘 선택하게 함
+    - 알고리즘 함수 불러와서 실행
 
-beatmap.py: .osu 파일을 읽고 노트·타이밍 정보를 파싱
+- beatmap.py
+    - .osu 파일을 읽고 노트·타이밍 정보를 파싱
 
-environment.py: gym.Env 클래스로 RL 환경 구현
+- environment.py
+    - gym.Env 클래스로 RL 환경 구현
 
-train_dqn.py: DQN 학습시키는 스크립트(stable-baselines3 로 학습 (실험 코드))
+- evaluate.py
+    - 학습된 알고리즘들의 성능을 통합, 요약, 시각화하여 최종 비교 분석을 수행
 
-models/: 학습된 모델이 저장됨
+- song_manager.py
+    - data 폴더 내 .osz 파일들을 자동으로 번호 매겨 출력
+    - 사용자 입력으로 곡 선택
+    - 선택한 .osz 압축 해제 후 .osu 파일을 찾아 반환
+    - 난이도에 따라 나뉜 .osu 파일 중에 사용자 입력으로 곡 선택
 
-beatmaps/: 학습용 맵(.osu) 파일들
+- models/
+    - 학습된 모델이 저장됨
 
-data/: 원본 .osz 자료
+- beatmaps/
+    - 학습용 맵(.osu) 파일들
+
+- data/
+    - 원본 .osz 자료
+
+## 프로그램 구동 방법
+
+- python3 main.py
+    - 곡 선택, 알고리즘 선택 등이 모두 차례로 수동으로 이루어진다. 원래 프로그램의 개발 목표는 이쪽이다.
+- python main.py train --algo PPO --lr 0.0003 --gamma 0.95 --song 2 --render
+    - 알고리즘을 PPO로 선택하고 학습률을 0.0003으로 지정하고 할인율을 0.95로 지정하고 곡을 2번째 것을 선택하고 GUI visualization을 enable한다. 서로 다른 hyperparameter에서의 결과 비교가 가능하도록 하기 위해서 이 옵션을 typer를 통해서 추가하였다. 

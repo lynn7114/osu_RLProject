@@ -90,7 +90,7 @@ def save_results_csv(results_df, path="results_combined.csv"):
     print(f" Combined results saved to {path}")
 
 def main():
-    # 기본적으로 기존 결과 CSV를 합쳐 요약/시각화를 수행합니다.
+    # 기본적으로 기존 결과 CSV를 합쳐 요약/시각화를 수행
     results = load_results("results_*.csv")
     # 만약 로그에 Algorithm 컬럼이 없다면 보정
     if "Algorithm" not in results.columns:
