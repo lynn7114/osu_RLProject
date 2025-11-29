@@ -9,19 +9,13 @@ import collections
 import random
 import numpy as np
 import os
-import pandas as pd
 import typer
 import glob
-
 import torch
-import torch.nn as nn
-import torch.optim as optim
-import torch.nn.functional as F
-from torch.distributions import Categorical
 
-from models.ppo_model import PPO, T_horizon
+from models.ppo_model import *
 from models.dqn_models import *
-from models.a2c_model import run_A2C
+from models.a2c_model import *
 
 app = typer.Typer(help="Osu! RL training")
 
@@ -32,16 +26,25 @@ def set_seed(seed):
     torch.cuda.manual_seed_all(seed)
     os.environ['PYTHONHASHSEED'] = str(seed)
 
-def run_with_seeds(alg_name, render, selected_osu):
+def run_with_seeds(alg_name, render, selected_osu, lr=1e-3, gamma=0.99):
     seeds = [0, 23, 147, 575, 2768]
     results = []
 
     for seed in seeds:
         print(f"\n Running {alg_name} (seed={seed})")
         set_seed(seed)
-        score = run_experiment(algorithm_type=alg_name, render=render, selected_osu=selected_osu)
+        if alg_name == "DQN" or alg_name == "Double_DQN" or alg_name == "Dueling_DQN":
+            q, q_target, scores, episodes = run_experiment_dqn(algorithm_type=alg_name, render=render, selected_osu=selected_osu, lr=lr, gamma=gamma)
+        elif alg_name == "PPO":
+            scores, episodes = run_experiment_ppo(algorithm_type=alg_name, render=render, selected_osu=selected_osu, lr=lr, gamma=gamma)
+        elif alg_name == "A2C":
+            scores, episodes = run_experiment_a2c(algorithm_type=alg_name, render=render, selected_osu=selected_osu, lr=lr, gamma=gamma)
+
+        # 마지막 20개 에피소드 리워드의 평균
+        score = np.mean(scores[-20:])
+
         if score is not None:
-            results.append(score)
+                results.append(score)
 
     if not results:
         print("no results recorded.")
@@ -57,112 +60,6 @@ def run_with_seeds(alg_name, render, selected_osu):
     print(f" Mean score: {mean_score:.2f}")
     print(f" Std: {std_score:.2f}")
     print(f" 95% CI: [{mean_score - ci:.2f}, {mean_score + ci:.2f}]")
-
-def run_experiment(algorithm_type="PPO", render=False, selected_osu=None, lr=1e-3, gamma=0.99):
-    """Run experiment with specified algorithm type"""
-    is_dqn = True
-    print(f"\n=== Running {algorithm_type} Experiment ===")
-
-    # selected_osu가 None이면 자동으로 선택하게 함 
-    if selected_osu is None:
-        from song_manager import select_song
-        selected_osu = select_song("data")
-        if not selected_osu:
-            print("No song selected. Exiting experiment.")
-            return
-
-    notes = parse_osu_file(selected_osu)
-    print(f"Loaded beatmap: {selected_osu} | Notes: {len(notes)}")
-    env = RhythmEnv(notes)
-
-    if render:
-        notes = parse_osu_file(selected_osu)
-        print(f"Loaded beatmap: {selected_osu} | Notes: {len(notes)}")
-        env = RhythmEnv(notes)
-
-    if algorithm_type == "Dueling_DQN":
-        q = DuelingQnet()
-        q_target = DuelingQnet()
-        train_fn = train_double_dqn  # Dueling uses Double DQN training
-    elif algorithm_type == "PPO":
-        model = PPO()
-        is_dqn = False
-    elif algorithm_type == "A2C":
-        run_A2C(env)
-        return
-    else:
-        q = Qnet()
-        q_target = Qnet()
-        train_fn = train_dqn if algorithm_type == "DQN" else train_double_dqn
-
-
-    if is_dqn:
-        q_target.load_state_dict(q.state_dict())
-        memory = ReplayBuffer()
-        optimizer = optim.Adam(q.parameters(), lr=lr)
-
-    print_interval = 20
-    score = 0.0
-
-    scores = []
-    episodes = []
-
-    for n_epi in range(3000):
-        s, _ = env.reset()
-        done = False
-
-        if is_dqn:
-            epsilon = max(0.01, 0.1 * np.exp(-n_epi / 300))
-        else:
-            episode_reward = 0.0
-
-        while not done:
-            if is_dqn:
-                a = q.sample_action(torch.from_numpy(s).float(), epsilon)
-                s_prime, r, terminated, truncated, info = env.step(a)
-                done = (terminated or truncated)
-                done_mask = 0.0 if done else 1.0
-                memory.put((s,a,r/100.0,s_prime, done_mask))
-                s = s_prime
-
-                score += r
-                if done:
-                    break
-            else:
-                for t in range(T_horizon):
-                    prob = model.pi(torch.from_numpy(s).float())
-                    m = Categorical(prob)
-                    a = m.sample().item()
-                    s_prime, r, terminated, truncated, info = env.step(a)
-                    done = terminated or truncated
-
-                    model.put_data((s, a, r/100.0, s_prime, prob[a].item(), done))
-                    s = s_prime
-
-                    score += r
-                    episode_reward += r
-                    if done:
-                        break
-
-                model.train_net()
-        if is_dqn:
-            if memory.size()>2000:
-                train_fn(q, q_target, memory, optimizer)
-
-            if n_epi%print_interval==0 and n_epi!=0:
-                q_target.load_state_dict(q.state_dict())
-                print("n_episode :{}, score : {:.1f}, n_buffer : {}, eps : {:.1f}%".format(
-                                                                n_epi, score/print_interval, memory.size(), epsilon*100))
-                score = 0.0
-        else:
-            scores.append(episode_reward)
-            episodes.append(n_epi)
-
-            if n_epi%print_interval==0 and n_epi!=0:
-                print("# of episode :{}, avg score : {:.1f}".format(n_epi, score/print_interval))
-                score = 0.0
-
-    env.close()
 
 def main():
     selected_osu = select_song("data")  
@@ -188,30 +85,34 @@ def main():
     render_choice = input("Enable GUI visualization? (y/n): ").lower()
     render = render_choice in ['y', 'yes']
 
+    # lr과 gamma 기본값 설정
+    lr = 1e-3
+    gamma = 0.99
+
     if choice == "1":
-        run_with_seeds("DQN", render, selected_osu)
+        run_with_seeds("DQN", render, selected_osu, lr, gamma)
     elif choice == "2":
-        run_with_seeds("Double_DQN", render, selected_osu)
+        run_with_seeds("Double_DQN", render, selected_osu, lr, gamma)
     elif choice == "3":
-        run_with_seeds("Dueling_DQN", render, selected_osu)
+        run_with_seeds("Dueling_DQN", render, selected_osu, lr, gamma)
     elif choice == "4":
-        run_with_seeds("PPO", render, selected_osu)
+        run_with_seeds("PPO", render, selected_osu, lr, gamma)
     elif choice == "5":
-        run_with_seeds("A2C", render, selected_osu)
+        run_with_seeds("A2C", render, selected_osu, lr, gamma)
     elif choice == "6":
         for alg in algorithms:
-            run_with_seeds(alg, render, selected_osu)
+            run_with_seeds(alg, render, selected_osu, lr, gamma)
     else:
         print("Invalid choice, running DQN by default.")
-        run_with_seeds("DQN", render, selected_osu)
+        run_with_seeds("DQN", render, selected_osu, lr, gamma)
 
 @app.command()
 def train(
-    algo: str = typer.Option("--algo", "PPO", help="Algorithm"),
-    lr: float = typer.Option("--learning-rate", 1e-3, help="Learning rate"),
-    gamma: float = typer.Option("--gamma", 0.99, help="Discount factor"),
-    song: str = typer.Option("--song", None, help="Song number or path"),
-    render: bool = typer.Option("--render", False, help="Enable GUI"),
+    algo: str = typer.Option(default="PPO", help="Algorithm"),
+    lr: float = typer.Option(default=1e-3, help="Learning rate"),
+    gamma: float = typer.Option(default=0.99, help="Discount factor"),
+    song: str = typer.Option(default=None, help="Song number or path"),
+    render: bool = typer.Option(default=False, help="Enable GUI"),
 ):
 
     if song is None:

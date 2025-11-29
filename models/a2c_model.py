@@ -1,3 +1,8 @@
+from song_manager import select_song
+from beatmap import extract_osz, parse_osu_file
+from environment import RhythmEnv
+from evaluate import main as evaluate_main
+
 import gymnasium as gym
 import torch
 import torch.nn as nn
@@ -71,15 +76,45 @@ class Memory:
         self.buffer.clear()
 
         
-def run_A2C(env):
+def run_experiment_a2c(algorithm_type="PPO", render=False, selected_osu=None, lr=1e-3, gamma=0.99):
+    """Run experiment with specified algorithm type"""
+    print(f"\n=== Running {algorithm_type} Experiment ===")
+    print(f"Algorithm Type: {algorithm_type}")
+    print(f"Render: {render}")
+    print(f"Selected Song: {selected_osu}")
+    print(f"Learning Rate: {lr}")
+    print(f"Gamma: {gamma}")
+
+    # selected_osu가 None이면 자동으로 선택하게 함 
+    if selected_osu is None:
+        from song_manager import select_song
+        selected_osu = select_song("data")
+        if not selected_osu:
+            print("No song selected. Exiting experiment.")
+            return
+
+    notes = parse_osu_file(selected_osu)
+    print(f"Loaded beatmap: {selected_osu} | Notes: {len(notes)}")
+    env = RhythmEnv(notes)
+
+    # if render:
+    #     notes = parse_osu_file(selected_osu)
+    #     print(f"Loaded beatmap: {selected_osu} | Notes: {len(notes)}")
+    #     env = RhythmEnv(notes)
+
     policy = PolicyNetwork().to(device)
     value = ValueNetwork().to(device)
-    optim = torch.optim.Adam(policy.parameters(), lr=1e-4)
-    value_optim = torch.optim.Adam(value.parameters(), lr=3e-4)
-    gamma = 0.99
+    # optim = torch.optim.Adam(policy.parameters(), lr=1e-4)
+    # value_optim = torch.optim.Adam(value.parameters(), lr=3e-4)
+    optim = torch.optim.Adam(policy.parameters(), lr=lr)
+    value_optim = torch.optim.Adam(value.parameters(), lr=lr)
+    #gamma = 0.99
     memory = Memory(200)
     batch_size = 32
     k = 0
+
+    scores = []
+    episodes = []
 
     for epoch in range(3000):
         state, _ = env.reset()
@@ -92,7 +127,8 @@ def run_A2C(env):
             next_state, reward, terminated, truncated, _ = env.step(int(action))
             done = (terminated or truncated)
             episode_reward += reward
-            memory.add((state, next_state, action, reward, done))
+            #memory.add((state, next_state, action, reward, done))
+            memory.add((state, next_state, action, reward/100.0, done))
 
             if k == batch_size:
                 k = 0
@@ -121,10 +157,13 @@ def run_A2C(env):
                 
                 memory.clear()
 
+            scores.append(episode_reward)
+            episodes.append(epoch)
+
             if done:
                 break
             state = next_state
 
-        if epoch % 10 == 0:
-            print("n_episode :{}, score : {:.1f}, n_buffer : {}".format(
-                                                                epoch, episode_reward/print_interval, memory.size()))
+        if epoch % 20 == 0:
+            print("n_episode :{}, score : {:.1f}".format(epoch, episode_reward/print_interval))
+    return scores, episodes
