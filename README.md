@@ -46,7 +46,7 @@ python3 main.py
 ```
 python main.py train --algo PPO --lr 0.0003 --gamma 0.95 --song 2 --render
 ```
-- 알고리즘을 PPO로 선택하고 학습률을 0.0003으로 지정하고 할인율을 0.95로 지정하고 곡을 2번째 것을 선택하고 GUI visualization을 enable한다. 서로 다른 hyperparameter에서의 결과 비교가 가능하도록 하기 위해서 이 옵션을 typer를 통해서 추가하였다.
+- 서로 다른 hyperparameter에서의 결과 비교가 가능하도록 하기 위해서 이 옵션을 typer를 통해서 추가하였다. 알고리즘 선택과 학습률과 할인율 지정, 곡 선택이 가능하다. 마지막 --render는 GUI visualization을 enable한다는 뜻이다. 
 
 
 ## 설치 및 요구사항
