@@ -15,12 +15,12 @@ def save_model(model, path, model_name="qnet", algorithm_name="DQN"):
     
     # 모델의 상태 딕셔너리(학습된 가중치)만 저장
     torch.save(model.state_dict(), full_path)
-    print(f"✅ Model weights saved to: {full_path}")
+    print(f"Model weights saved to: {full_path}")
 
 def save_score(scoredata, path, algorithm_name="DQN") :
     full_path = f"{path}/{algorithm_name}_scores.npy"
     np.save(full_path, np.array(scoredata))
-    print(f"✅ Model scores saved to: {full_path}")
+    print(f"Model scores saved to: {full_path}")
 
 # --- 사용 예시 ---
 # save_model(q, "./models")
@@ -46,7 +46,7 @@ def load_model(model_instance, path, model_name="qnet", algorithm_name = "DQN"):
     # 모델의 state_dict에 저장된 가중치를 로드합니다.
     model_instance.load_state_dict(state_dict)
     # model_instance.eval()  # 평가 모드로 설정
-    print(f"✅ Model weights loaded from: {full_path}")
+    print(f"Model weights loaded from: {full_path}")
     
     return model_instance
 
