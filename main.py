@@ -44,7 +44,7 @@ def run_with_seeds(alg_name, render, selected_osu, lr=1e-3, gamma=0.99):
 
         # 마지막 20개 에피소드 리워드의 평균
         score = np.mean(scores[-20:])
-
+        scores_per_seeds.append(scores)
         if score is not None:
                 results.append(score)
 
@@ -63,8 +63,6 @@ def run_with_seeds(alg_name, render, selected_osu, lr=1e-3, gamma=0.99):
     print(f" Std: {std_score:.2f}")
     print(f" 95% CI: [{mean_score - ci:.2f}, {mean_score + ci:.2f}]")
 
-    scores_per_seeds = np.array(np.mean(scores_per_seeds, axis=0))
-    scores_per_seeds = np.append(scores_per_seeds, results)
     return scores_per_seeds
 
 def main():
