@@ -139,7 +139,8 @@ def train(
         except Exception:
             selected_osu = song  # 직접 경로 입력 경우
 
-    run_with_seeds(algo, render, selected_osu, lr, gamma)
+    scores = run_with_seeds(algo, render, selected_osu, lr, gamma)
+    save_score(scores, "./scores", algo)
 
 @app.command()
 def evaluate_all():

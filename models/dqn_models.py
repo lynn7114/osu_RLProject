@@ -60,6 +60,8 @@ class Qnet(nn.Module):
         return x
 
     def sample_action(self, obs, epsilon):
+        if obs.dim() == 1:
+            obs = obs.unsqueeze(0)
         out = self.forward(obs)
         coin = random.random()
         if coin < epsilon:
