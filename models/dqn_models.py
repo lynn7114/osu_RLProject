@@ -206,8 +206,7 @@ def run_experiment_dqn(algorithm_type="DQN", render=False, selected_osu=None, lr
 
         if n_epi%print_interval==0 and n_epi!=0:
             q_target.load_state_dict(q.state_dict())
-            print("n_episode :{}, score : {:.1f}, n_buffer : {}, eps : {:.1f}%".format(
-                                                                n_epi, score/print_interval, memory.size(), epsilon*100))
+            print("n_episode :{}, score : {:.1f}".format(n_epi, score/print_interval))
             score = 0.0
 
     env.close()
