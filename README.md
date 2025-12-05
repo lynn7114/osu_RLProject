@@ -26,9 +26,20 @@ osu!는 https://osu.ppy.sh/ 에서 다운받을 수 있는 리듬게임으로 ht
     - 사용자 입력으로 곡 선택
     - 선택한 .osz 압축 해제 후 .osu 파일을 찾아 반환
     - 난이도에 따라 나뉜 .osu 파일 중에 사용자 입력으로 곡 선택
+ 
+- modelloader.py
+    - 모델의 가중치(state_dict)를 .pth 파일로 저장 및 로드
+    - 에피소드 점수 리스트를 .npy 파일로 저장 및 로드
+ 
+- visualize.ipynb
+    - scores 폴더에 저장해둔 점수 데이터를 알고리즘별로 이동 평균 처리하여 학습 추이를 시각화
+    - 전체 데이터를 기반으로 평균 보상과 95% 신뢰 구간을 계산하여 최종 성능 시각화
 
 - models/
     - 학습된 모델이 저장됨
+ 
+- scores/
+    - modelloader에서 업로드한 알고리즘별 점수가 저장됨 
 
 - beatmaps/
     - 학습용 맵(.osu) 파일들
@@ -46,7 +57,7 @@ python3 main.py
 ```
 python main.py train --algo PPO --lr 0.0003 --gamma 0.95 --song 2 --render
 ```
-- 알고리즘을 PPO로 선택하고 학습률을 0.0003으로 지정하고 할인율을 0.95로 지정하고 곡을 2번째 것을 선택하고 GUI visualization을 enable한다. 서로 다른 hyperparameter에서의 결과 비교가 가능하도록 하기 위해서 이 옵션을 typer를 통해서 추가하였다.
+- 서로 다른 hyperparameter에서의 결과 비교가 가능하도록 하기 위해서 이 옵션을 typer를 통해서 추가하였다. 알고리즘 선택과 학습률과 할인율 지정, 곡 선택이 가능하다. 마지막 --render는 GUI visualization을 enable한다는 뜻이다. 
 
 
 ## 설치 및 요구사항
@@ -73,8 +84,12 @@ pip install gymnasium numpy pandas torch typer seaborn
     - 노트 입력 타이밍을 놓치거나 오차가 클 경우 벌점 -0.5를 받으며 콤보가 초기화됨
 - 악곡 전체를 사용하기에는 노래가 길어서 처음 200개 노트만 사용함
 
-## 성능 평가 및 비교 (Evaluation 함수 내 구현)
+## 성능 평가 및 비교 
 
 - 다중 시드: [0, 23, 147, 575, 2768]를 random number generator seed로 만들어서 편향을 줄임
 - 주요 지표: 각 알고리즘별 평균 점수와 95% 신뢰 구간을 계산함
-- 시각화: `plots/` 폴더에 CI를 포함한 막대 차트 및 학습 곡선 생성
+- 시각화: CI를 포함한 막대 차트 및 학습 곡선 생성
+
+## 결과 요약
+
+- 세 모델 중 PPO가 가장 성능이 좋았다. 
