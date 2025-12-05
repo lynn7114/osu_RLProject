@@ -171,5 +171,5 @@ def run_experiment_a2c(algorithm_type="PPO", render=False, selected_osu=None, lr
         episodes.append(epoch)
         
         if epoch % 20 == 0:
-            print("n_episode :{}, score : {:.1f}".format(epoch, episode_reward))
+            print("n_episode :{}, score : {:.1f}".format(epoch, episode_reward/print_interval))
     return scores, episodes
