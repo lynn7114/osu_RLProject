@@ -16,6 +16,7 @@ import torch
 from models.ppo_model import *
 from models.dqn_models import *
 from models.a2c_model import *
+from modelloader import save_score
 
 app = typer.Typer(help="Osu! RL training")
 
@@ -29,6 +30,7 @@ def set_seed(seed):
 def run_with_seeds(alg_name, render, selected_osu, lr=1e-3, gamma=0.99):
     seeds = [0, 23, 147, 575, 2768]
     results = []
+    scores_per_seeds = []
 
     for seed in seeds:
         print(f"\n Running {alg_name} (seed={seed})")
@@ -42,7 +44,7 @@ def run_with_seeds(alg_name, render, selected_osu, lr=1e-3, gamma=0.99):
 
         # 마지막 20개 에피소드 리워드의 평균
         score = np.mean(scores[-20:])
-
+        scores_per_seeds.append(scores)
         if score is not None:
                 results.append(score)
 
@@ -60,6 +62,8 @@ def run_with_seeds(alg_name, render, selected_osu, lr=1e-3, gamma=0.99):
     print(f" Mean score: {mean_score:.2f}")
     print(f" Std: {std_score:.2f}")
     print(f" 95% CI: [{mean_score - ci:.2f}, {mean_score + ci:.2f}]")
+
+    return scores_per_seeds
 
 def main():
     selected_osu = select_song("data")  
@@ -90,21 +94,28 @@ def main():
     gamma = 0.99
 
     if choice == "1":
-        run_with_seeds("DQN", render, selected_osu, lr, gamma)
+        scores = run_with_seeds("DQN", render, selected_osu, lr, gamma)
+        save_score(scores, "./scores", "DQN")
     elif choice == "2":
-        run_with_seeds("Double_DQN", render, selected_osu, lr, gamma)
+        scores = run_with_seeds("Double_DQN", render, selected_osu, lr, gamma)
+        save_score(scores, "./scores", "Double_DQN")
     elif choice == "3":
-        run_with_seeds("Dueling_DQN", render, selected_osu, lr, gamma)
+        scores = run_with_seeds("Dueling_DQN", render, selected_osu, lr, gamma)
+        save_score(scores, "./scores", "Dueling_DQN")
     elif choice == "4":
-        run_with_seeds("PPO", render, selected_osu, lr, gamma)
+        scores = run_with_seeds("PPO", render, selected_osu, lr, gamma)
+        save_score(scores, "./scores", "PPO")
     elif choice == "5":
-        run_with_seeds("A2C", render, selected_osu, lr, gamma)
+        scores = run_with_seeds("A2C", render, selected_osu, lr, gamma)
+        save_score(scores, "./scores", "A2C")
     elif choice == "6":
         for alg in algorithms:
-            run_with_seeds(alg, render, selected_osu, lr, gamma)
+            scores = run_with_seeds(alg, render, selected_osu, lr, gamma)
+            save_score(scores, "./scores", alg)
     else:
         print("Invalid choice, running DQN by default.")
-        run_with_seeds("DQN", render, selected_osu, lr, gamma)
+        scores = run_with_seeds("DQN", render, selected_osu, lr, gamma)
+        save_score(scores, "./scores", "DQN")
 
 @app.command()
 def train(
@@ -128,7 +139,8 @@ def train(
         except Exception:
             selected_osu = song  # 직접 경로 입력 경우
 
-    run_with_seeds(algo, render, selected_osu, lr, gamma)
+    scores = run_with_seeds(algo, render, selected_osu, lr, gamma)
+    save_score(scores, "./scores", algo)
 
 @app.command()
 def evaluate_all():

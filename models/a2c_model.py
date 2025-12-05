@@ -116,7 +116,8 @@ def run_experiment_a2c(algorithm_type="PPO", render=False, selected_osu=None, lr
     scores = []
     episodes = []
 
-    for epoch in range(3000):
+    epoch = 0
+    while epoch < 3000 :
         state, _ = env.reset()
         episode_reward = 0
 
@@ -157,13 +158,18 @@ def run_experiment_a2c(algorithm_type="PPO", render=False, selected_osu=None, lr
                 
                 memory.clear()
 
-            scores.append(episode_reward)
-            episodes.append(epoch)
+                
 
             if done:
                 break
             state = next_state
 
+        if episode_reward == 0 :
+            continue
+        epoch += 1
+        scores.append(episode_reward)
+        episodes.append(epoch)
+        
         if epoch % 20 == 0:
             print("n_episode :{}, score : {:.1f}".format(epoch, episode_reward/print_interval))
     return scores, episodes
